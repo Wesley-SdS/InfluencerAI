@@ -10,15 +10,13 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
-     * - api/auth (auth API routes)
-     * - api/user/register (registro público)
-     * - api/stripe/webhook (webhook do Stripe)
+     * - api/* (todas as rotas de API têm sua própria proteção via withAuth)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - login, register, verify-email (páginas públicas de auth)
      * - / (homepage)
      */
-    "/((?!api/auth|api/user/register|api/stripe/webhook|_next/static|_next/image|favicon.ico|login|register|verify-email|^/$).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|login|register|verify-email|^/$).*)",
   ],
 }
