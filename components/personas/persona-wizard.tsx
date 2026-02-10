@@ -68,6 +68,7 @@ export function PersonaWizard() {
   const handleSubmit = async () => {
     setIsSubmitting(true)
     try {
+      // Schema validation will clean empty strings automatically
       const persona = await createPersona(data)
 
       // If reference URL was provided, set it
@@ -82,6 +83,7 @@ export function PersonaWizard() {
       toast.success("Persona criada com sucesso!")
       router.push(`/dashboard/personas/${persona.id}`)
     } catch (err) {
+      console.error("Error creating persona:", err)
       toast.error(err instanceof Error ? err.message : "Erro ao criar persona")
     } finally {
       setIsSubmitting(false)

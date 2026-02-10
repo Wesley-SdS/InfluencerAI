@@ -46,7 +46,7 @@ export function PersonaIdentityStep({ data, onChange }: PersonaIdentityStepProps
         <div className="space-y-2">
           <Label>Gênero</Label>
           <Select value={data.gender || ""} onValueChange={(v) => onChange({ gender: v })}>
-            <SelectTrigger>
+            <SelectTrigger suppressHydrationWarning>
               <SelectValue placeholder="Selecionar" />
             </SelectTrigger>
             <SelectContent>
@@ -60,7 +60,7 @@ export function PersonaIdentityStep({ data, onChange }: PersonaIdentityStepProps
         <div className="space-y-2">
           <Label>Faixa Etária</Label>
           <Select value={data.ageRange || ""} onValueChange={(v) => onChange({ ageRange: v })}>
-            <SelectTrigger>
+            <SelectTrigger suppressHydrationWarning>
               <SelectValue placeholder="Selecionar" />
             </SelectTrigger>
             <SelectContent>
@@ -76,7 +76,7 @@ export function PersonaIdentityStep({ data, onChange }: PersonaIdentityStepProps
         <div className="space-y-2">
           <Label>Nicho</Label>
           <Select value={data.niche || ""} onValueChange={(v) => onChange({ niche: v })}>
-            <SelectTrigger>
+            <SelectTrigger suppressHydrationWarning>
               <SelectValue placeholder="Selecionar nicho" />
             </SelectTrigger>
             <SelectContent>
@@ -90,7 +90,7 @@ export function PersonaIdentityStep({ data, onChange }: PersonaIdentityStepProps
         <div className="space-y-2">
           <Label>Plataforma Alvo</Label>
           <Select value={data.targetPlatform || ""} onValueChange={(v) => onChange({ targetPlatform: v })}>
-            <SelectTrigger>
+            <SelectTrigger suppressHydrationWarning>
               <SelectValue placeholder="Selecionar plataforma" />
             </SelectTrigger>
             <SelectContent>
@@ -105,7 +105,7 @@ export function PersonaIdentityStep({ data, onChange }: PersonaIdentityStepProps
       <div className="space-y-2">
         <Label>Tom de Conteúdo</Label>
         <Select value={data.contentTone || ""} onValueChange={(v) => onChange({ contentTone: v })}>
-          <SelectTrigger>
+          <SelectTrigger suppressHydrationWarning>
             <SelectValue placeholder="Selecionar tom" />
           </SelectTrigger>
           <SelectContent>

@@ -69,13 +69,34 @@ export function PersonaProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const createPersona = useCallback(async (data: CreatePersonaDTO): Promise<PersonaData> => {
+    console.log('=== CREATING PERSONA ===')
+    console.log('Data being sent:', JSON.stringify(data, null, 2))
+
     const res = await fetch('/api/personas', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     })
     const json = await res.json()
-    if (!json.success) throw new Error(json.error)
+
+    console.log('API Response status:', res.status)
+    console.log('API Response:', JSON.stringify(json, null, 2))
+
+    if (!json.success) {
+      // Log validation details if available
+      if (json.details) {
+        console.error('=== VALIDATION ERRORS ===')
+        json.details.forEach((err: any, idx: number) => {
+          console.error(`Error ${idx + 1}:`, {
+            path: err.path,
+            message: err.message,
+            code: err.code,
+            received: err.received,
+          })
+        })
+      }
+      throw new Error(json.error)
+    }
 
     setPersonas((prev) => [json.data, ...prev])
     return json.data
