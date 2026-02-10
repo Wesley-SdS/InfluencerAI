@@ -135,23 +135,41 @@ export function VideoModelSelector({ selectedModelId, onModelSelect, disabled = 
                       setOpen(false)
                     }}
                     className={cn(
-                      "w-full flex flex-col items-start gap-0.5 p-2.5 rounded-md text-left hover:bg-accent transition-colors",
+                      "group w-full flex flex-col items-start gap-0.5 p-2.5 rounded-md text-left hover:bg-accent transition-colors",
                       selectedModelId === model.id && "bg-accent",
                     )}
                   >
                     <div className="flex w-full items-center justify-between">
-                      <span className="font-medium text-sm">{model.name}</span>
+                      <span className={cn(
+                        "font-medium text-sm text-foreground group-hover:text-gray-900",
+                        (selectedModelId === model.id) && "text-gray-900 dark:text-gray-900"
+                      )}>
+                        {model.name}
+                      </span>
                       <div className="flex items-center gap-2">
                         {model.runCount != null && (
-                          <span className="text-[10px] text-muted-foreground/60">
+                          <span className={cn(
+                            "text-[10px] text-muted-foreground group-hover:text-gray-600",
+                            (selectedModelId === model.id) && "text-gray-600 dark:text-gray-600"
+                          )}>
                             {formatRunCount(model.runCount)} runs
                           </span>
                         )}
                         {selectedModelId === model.id && <Check className="h-4 w-4 text-primary shrink-0" />}
                       </div>
                     </div>
-                    <span className="text-xs text-muted-foreground line-clamp-1">{model.description}</span>
-                    <span className="text-[10px] text-muted-foreground/60 font-mono">{model.id}</span>
+                    <span className={cn(
+                      "text-xs text-foreground/80 group-hover:text-gray-800 line-clamp-1",
+                      (selectedModelId === model.id) && "text-gray-800 dark:text-gray-800"
+                    )}>
+                      {model.description}
+                    </span>
+                    <span className={cn(
+                      "text-[10px] text-muted-foreground group-hover:text-gray-600 font-mono",
+                      (selectedModelId === model.id) && "text-gray-600 dark:text-gray-600"
+                    )}>
+                      {model.id}
+                    </span>
                   </button>
                 ))
               )}

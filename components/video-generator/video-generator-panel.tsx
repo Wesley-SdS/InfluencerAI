@@ -1,19 +1,26 @@
 "use client"
 
+import { useEffect, useRef } from "react"
 import { Video } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { VideoModelSelector } from "./video-model-selector"
 import { ProductPromptInput } from "./product-prompt-input"
 import { SourceImageSelector } from "./source-image-selector"
 import { VideoPreview } from "./video-preview"
+import { NarrationControls } from "./narration-controls"
 import { ErrorMessage } from "@/components/shared/error-message"
 import { useVideoGeneration } from "@/lib/hooks/use-video-generation"
+import { useGenerationPipeline } from "@/lib/hooks/use-generation-pipeline"
 import { useReplicate } from "@/lib/context/replicate-context"
+import { usePersona } from "@/lib/context/persona-context"
+import { VoicePlayer } from "@/components/voice/voice-player"
 import Link from "next/link"
 
 export function VideoGeneratorPanel() {
   const { isConfigured } = useReplicate()
+  const { selectedPersona } = usePersona()
   const {
     modelId,
     productName,
@@ -34,7 +41,42 @@ export function VideoGeneratorPanel() {
     reset,
   } = useVideoGeneration()
 
+  const pipeline = useGenerationPipeline()
+  const prevPersonaId = useRef<string | null>(null)
+
+  // Pre-fill source image from persona reference
+  useEffect(() => {
+    const currentId = selectedPersona?.id ?? null
+    if (currentId !== prevPersonaId.current) {
+      prevPersonaId.current = currentId
+      if (selectedPersona?.referenceImageUrl) {
+        setSourceImageUrl(selectedPersona.referenceImageUrl)
+      }
+    }
+  }, [selectedPersona, setSourceImageUrl])
+
   const canGenerate = productName.trim() && productDescription.trim()
+
+  const combinedLoading = isLoading || pipeline.isLoading
+  const combinedError = error || pipeline.error
+  const combinedVideoUrl = pipeline.result?.outputUrl || videoUrl
+
+  const handleGenerate = async () => {
+    if (pipeline.useNarration && pipeline.narrationText.trim()) {
+      await pipeline.generateVideoWithVoice({
+        promptContext: {
+          productName,
+          productDescription,
+          action: callToAction,
+          scenario: additionalPrompt,
+        },
+        modelId,
+        sourceImageUrl: sourceImageUrl || undefined,
+      })
+    } else {
+      generate()
+    }
+  }
 
   if (!isConfigured) {
     return (
@@ -56,13 +98,18 @@ export function VideoGeneratorPanel() {
       <div className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Configuração do Vídeo</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle>Configuração do Vídeo</CardTitle>
+              {selectedPersona && (
+                <Badge variant="secondary">{selectedPersona.name}</Badge>
+              )}
+            </div>
             <CardDescription>Selecione o modelo e a imagem de origem</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <VideoModelSelector selectedModelId={modelId} onModelSelect={setModelId} disabled={isLoading} />
+            <VideoModelSelector selectedModelId={modelId} onModelSelect={setModelId} disabled={combinedLoading} />
 
-            <SourceImageSelector value={sourceImageUrl} onChange={setSourceImageUrl} disabled={isLoading} />
+            <SourceImageSelector value={sourceImageUrl} onChange={setSourceImageUrl} disabled={combinedLoading} />
           </CardContent>
         </Card>
 
@@ -81,14 +128,25 @@ export function VideoGeneratorPanel() {
               onProductDescriptionChange={setProductDescription}
               onCallToActionChange={setCallToAction}
               onAdditionalPromptChange={setAdditionalPrompt}
-              disabled={isLoading}
+              disabled={combinedLoading}
             />
 
-            {error && <ErrorMessage message={error} onRetry={reset} />}
+            {selectedPersona && (
+              <NarrationControls
+                enabled={pipeline.useNarration}
+                onEnabledChange={pipeline.setUseNarration}
+                text={pipeline.narrationText}
+                onTextChange={pipeline.setNarrationText}
+                persona={selectedPersona}
+                disabled={combinedLoading}
+              />
+            )}
 
-            <Button className="w-full" size="lg" onClick={() => generate()} disabled={isLoading || !canGenerate}>
+            {combinedError && <ErrorMessage message={combinedError} onRetry={reset} />}
+
+            <Button className="w-full" size="lg" onClick={handleGenerate} disabled={combinedLoading || !canGenerate}>
               <Video className="h-5 w-5 mr-2" />
-              {isLoading ? "Gerando..." : "Gerar Vídeo"}
+              {combinedLoading ? "Gerando..." : pipeline.useNarration && pipeline.narrationText.trim() ? "Gerar Vídeo com Narração" : "Gerar Vídeo"}
             </Button>
           </CardContent>
         </Card>
@@ -100,7 +158,13 @@ export function VideoGeneratorPanel() {
           <CardDescription>Seu vídeo promocional gerado</CardDescription>
         </CardHeader>
         <CardContent>
-          <VideoPreview videoUrl={videoUrl} isLoading={isLoading} onRegenerate={() => generate()} />
+          <VideoPreview videoUrl={combinedVideoUrl} isLoading={combinedLoading} onRegenerate={handleGenerate} />
+          {pipeline.result?.audioUrl && (
+            <div className="mt-4 space-y-2">
+              <p className="text-sm font-medium">Narração</p>
+              <VoicePlayer src={pipeline.result.audioUrl} />
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
