@@ -5,6 +5,7 @@ import { AppearanceSettings } from "@/components/settings/appearance-settings"
 import { DataManagementSettings } from "@/components/settings/data-management-settings"
 import { PromptRefinerSettings } from "@/components/settings/prompt-refiner-settings"
 import { ReplicateApiSettings } from "@/components/settings/replicate-api-settings"
+import { ElevenLabsApiSettings } from "@/components/settings/elevenlabs-api-settings"
 
 /**
  * Página de Configurações
@@ -22,6 +23,7 @@ export default function SettingsPage() {
 
       <div className="grid gap-6">
         <ReplicateApiSettings />
+        <ElevenLabsApiSettings />
         <PromptRefinerSettings />
         <AppearanceSettings />
         <DataManagementSettings />

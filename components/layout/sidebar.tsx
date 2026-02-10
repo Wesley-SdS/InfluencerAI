@@ -3,13 +3,17 @@
 import { usePathname } from "next/navigation"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
-import { LayoutDashboard, ImageIcon, VideoIcon, Settings, History } from "lucide-react"
+import { LayoutDashboard, Users, ImageIcon, VideoIcon, Settings, History, Megaphone, CreditCard, Share2 } from "lucide-react"
 
 const navigation = [
   { name: "Painel", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Personas", href: "/dashboard/personas", icon: Users },
+  { name: "Campanhas", href: "/dashboard/campaigns", icon: Megaphone },
   { name: "Gerador de Imagem", href: "/dashboard/image-generator", icon: ImageIcon },
   { name: "Gerador de Vídeo", href: "/dashboard/video-generator", icon: VideoIcon },
+  { name: "Publicar", href: "/dashboard/social", icon: Share2 },
   { name: "Histórico", href: "/dashboard/history", icon: History },
+  { name: "Billing", href: "/dashboard/billing", icon: CreditCard },
   { name: "Configurações", href: "/dashboard/settings", icon: Settings },
 ]
 
@@ -20,7 +24,7 @@ export function Sidebar() {
     <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 lg:pt-16 lg:border-r lg:border-border/40 lg:bg-sidebar">
       <nav className="flex-1 px-4 py-6 space-y-1">
         {navigation.map((item) => {
-          const isActive = pathname === item.href
+          const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href))
           return (
             <Link
               key={item.name}
