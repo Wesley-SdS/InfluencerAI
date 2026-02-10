@@ -1,0 +1,306 @@
+import Replicate from 'replicate';
+import { PersonaService } from '@/lib/services/persona-service';
+import { GenerationService } from '@/lib/services/generation/generation.service';
+import { FaceConsistencyService } from '@/lib/services/face-consistency/face-consistency.service';
+import { VoiceService } from '@/lib/services/voice/voice.service';
+import { PromptBuilderService } from '@/lib/services/prompt-builder-service';
+import { ApiKeyService } from '@/lib/services/api-key/api-key.service';
+import { LipSyncService } from '@/lib/services/lip-sync/lip-sync.service';
+import type {
+  PipelinePersonaImageParams,
+  PipelinePersonaVideoParams,
+  PipelinePersonaVideoWithVoiceParams,
+  PipelineLipSyncParams,
+  PipelineResult,
+} from '@/lib/types/pipeline';
+import type { VoiceSettings } from '@/lib/types/voice';
+import type { Prisma } from '@prisma/client';
+
+export class GenerationPipelineService {
+  private static instance: GenerationPipelineService;
+  private personaService = new PersonaService();
+  private generationService = new GenerationService();
+  private faceConsistencyService = FaceConsistencyService.getInstance();
+  private voiceService = VoiceService.getInstance();
+  private apiKeyService = new ApiKeyService();
+  private lipSyncService = LipSyncService.getInstance();
+
+  private constructor() {}
+
+  static getInstance(): GenerationPipelineService {
+    if (!GenerationPipelineService.instance) {
+      GenerationPipelineService.instance = new GenerationPipelineService();
+    }
+    return GenerationPipelineService.instance;
+  }
+
+  async generatePersonaImage(
+    userId: string,
+    replicateKey: string,
+    params: PipelinePersonaImageParams
+  ): Promise<PipelineResult> {
+    const persona = await this.personaService.getPersona(userId, params.personaId);
+    const personaAttrs = {
+      gender: persona.gender ?? undefined,
+      ageRange: persona.ageRange ?? undefined,
+      ethnicity: persona.ethnicity ?? undefined,
+      bodyType: persona.bodyType ?? undefined,
+      hairColor: persona.hairColor ?? undefined,
+      hairStyle: persona.hairStyle ?? undefined,
+      eyeColor: persona.eyeColor ?? undefined,
+      distinctiveFeatures: persona.distinctiveFeatures ?? undefined,
+      styleDescription: persona.styleDescription ?? undefined,
+    };
+    const basePrompt = persona.basePrompt || PromptBuilderService.buildBasePrompt(personaAttrs);
+    const fullPrompt = PromptBuilderService.buildImagePrompt(basePrompt, params.promptContext);
+
+    // Face consistency path
+    if (params.useFaceConsistency && persona.referenceImageUrl) {
+      const result = await this.faceConsistencyService.generateConsistentImage(
+        replicateKey,
+        userId,
+        {
+          personaId: params.personaId,
+          strategy: params.faceConsistencyStrategy || 'ip-adapter-faceid',
+          prompt: fullPrompt,
+          faceImageUrl: persona.referenceImageUrl,
+          strength: params.faceConsistencyStrength ?? 0.6,
+          aspectRatio: params.aspectRatio,
+        }
+      );
+
+      return {
+        generationId: result.generationId,
+        outputUrl: result.imageUrl,
+        personaId: params.personaId,
+        metadata: {
+          modelId: result.modelId,
+          prompt: fullPrompt,
+          strategy: result.strategy,
+          strength: result.strength,
+        },
+      };
+    }
+
+    // Standard generation path
+    const replicate = new Replicate({ auth: replicateKey });
+    const input: Record<string, unknown> = { prompt: fullPrompt };
+    if (params.aspectRatio) input.aspect_ratio = params.aspectRatio;
+
+    const output = await replicate.run(
+      params.modelId as `${string}/${string}`,
+      { input }
+    );
+
+    const imageUrl = Array.isArray(output) ? output[0] : output;
+    if (!imageUrl || typeof imageUrl !== 'string') {
+      throw new Error('Output inválido do modelo');
+    }
+
+    const generation = await this.generationService.createGeneration({
+      userId,
+      type: 'image',
+      modelId: params.modelId,
+      prompt: fullPrompt,
+      settings: { promptContext: params.promptContext, aspectRatio: params.aspectRatio },
+      replicateUrl: imageUrl,
+      personaId: params.personaId,
+    });
+
+    await this.personaService.addAsset(userId, params.personaId, {
+      type: 'generated_image',
+      url: generation.outputUrl,
+      publicId: generation.publicId,
+      prompt: fullPrompt,
+      modelId: params.modelId,
+    });
+
+    return {
+      generationId: generation.id,
+      outputUrl: generation.outputUrl,
+      personaId: params.personaId,
+      metadata: { modelId: params.modelId, prompt: fullPrompt },
+    };
+  }
+
+  async generatePersonaVideo(
+    userId: string,
+    replicateKey: string,
+    params: PipelinePersonaVideoParams
+  ): Promise<PipelineResult> {
+    const persona = await this.personaService.getPersona(userId, params.personaId);
+    const videoPersonaAttrs = {
+      gender: persona.gender ?? undefined,
+      ageRange: persona.ageRange ?? undefined,
+      ethnicity: persona.ethnicity ?? undefined,
+      bodyType: persona.bodyType ?? undefined,
+      hairColor: persona.hairColor ?? undefined,
+      hairStyle: persona.hairStyle ?? undefined,
+      eyeColor: persona.eyeColor ?? undefined,
+      distinctiveFeatures: persona.distinctiveFeatures ?? undefined,
+      styleDescription: persona.styleDescription ?? undefined,
+    };
+    const basePrompt = persona.basePrompt || PromptBuilderService.buildBasePrompt(videoPersonaAttrs);
+    const fullPrompt = PromptBuilderService.buildVideoPrompt(basePrompt, params.promptContext);
+
+    const replicate = new Replicate({ auth: replicateKey });
+    const input: Record<string, unknown> = { prompt: fullPrompt };
+
+    const sourceImage = params.sourceImageUrl || persona.referenceImageUrl;
+    if (sourceImage) input.image = sourceImage;
+    if (params.duration) input.duration = params.duration;
+
+    const output = await replicate.run(
+      params.modelId as `${string}/${string}`,
+      { input }
+    );
+
+    const videoUrl = Array.isArray(output) ? output[0] : output;
+    if (!videoUrl || typeof videoUrl !== 'string') {
+      throw new Error('Output inválido do modelo');
+    }
+
+    const generation = await this.generationService.createGeneration({
+      userId,
+      type: 'video',
+      modelId: params.modelId,
+      prompt: fullPrompt,
+      settings: { promptContext: params.promptContext, sourceImageUrl: sourceImage },
+      replicateUrl: videoUrl,
+      personaId: params.personaId,
+    });
+
+    await this.personaService.addAsset(userId, params.personaId, {
+      type: 'generated_video',
+      url: generation.outputUrl,
+      publicId: generation.publicId,
+      prompt: fullPrompt,
+      modelId: params.modelId,
+    });
+
+    return {
+      generationId: generation.id,
+      outputUrl: generation.outputUrl,
+      thumbnailUrl: generation.thumbnailUrl ?? undefined,
+      personaId: params.personaId,
+      metadata: { modelId: params.modelId, prompt: fullPrompt },
+    };
+  }
+
+  async generatePersonaVideoWithVoice(
+    userId: string,
+    replicateKey: string,
+    params: PipelinePersonaVideoWithVoiceParams
+  ): Promise<PipelineResult> {
+    const videoResult = await this.generatePersonaVideo(userId, replicateKey, params);
+
+    const persona = await this.personaService.getPersona(userId, params.personaId);
+    if (!persona.voiceId) {
+      throw new Error('Persona não tem voz configurada');
+    }
+
+    const elevenLabsKey = await this.apiKeyService.getApiKey(userId, 'elevenlabs');
+    if (!elevenLabsKey) {
+      throw new Error('API key do ElevenLabs não configurada');
+    }
+
+    const savedSettings = (persona.voiceSettings as Record<string, unknown>) || {};
+    const mergedSettings: VoiceSettings = {
+      stability: (params.voiceSettings?.stability ?? savedSettings.stability ?? 0.5) as number,
+      similarity_boost: (params.voiceSettings?.similarity_boost ?? savedSettings.similarity_boost ?? 0.75) as number,
+      style: (params.voiceSettings?.style ?? savedSettings.style ?? 0.0) as number,
+      use_speaker_boost: (params.voiceSettings?.use_speaker_boost ?? savedSettings.use_speaker_boost ?? true) as boolean,
+    };
+
+    const audioResult = await this.voiceService.generateSpeech(
+      elevenLabsKey,
+      userId,
+      {
+        voiceId: persona.voiceId,
+        text: params.narrationText,
+        voiceSettings: mergedSettings,
+      }
+    );
+
+    await this.personaService.addAsset(userId, params.personaId, {
+      type: 'generated_audio',
+      url: audioResult.audioUrl,
+      publicId: audioResult.publicId,
+      metadata: {
+        voiceId: persona.voiceId,
+        text: params.narrationText,
+        associatedVideoId: videoResult.generationId,
+      } as unknown as Prisma.InputJsonValue,
+    });
+
+    return {
+      ...videoResult,
+      audioUrl: audioResult.audioUrl,
+      metadata: {
+        ...videoResult.metadata,
+        voiceId: persona.voiceId,
+        narrationText: params.narrationText,
+      },
+    };
+  }
+
+  async generatePersonaLipSyncVideo(
+    userId: string,
+    replicateKey: string,
+    params: PipelineLipSyncParams
+  ): Promise<PipelineResult> {
+    const persona = await this.personaService.getPersona(userId, params.personaId);
+    const sourceImage = params.sourceImageUrl || persona.referenceImageUrl;
+
+    if (!sourceImage) {
+      throw new Error('Persona sem imagem de referência para lip sync');
+    }
+
+    const model = params.model || 'sadtalker';
+    const modelInfo = this.lipSyncService.getModel(model);
+    const replicateModelId = modelInfo?.replicateModelId || 'lucataco/sadtalker';
+
+    const result = await this.lipSyncService.generateLipSync(replicateKey, userId, {
+      personaId: params.personaId,
+      imageUrl: sourceImage,
+      audioUrl: params.audioUrl,
+      model,
+    });
+
+    const generation = await this.generationService.createGeneration({
+      userId,
+      type: 'video',
+      modelId: replicateModelId,
+      prompt: `Lip sync generation (${model})`,
+      settings: {
+        sourceImageUrl: sourceImage,
+        audioUrl: params.audioUrl,
+        lipSyncModel: model,
+      },
+      replicateUrl: result.videoUrl,
+      personaId: params.personaId,
+    });
+
+    await this.personaService.addAsset(userId, params.personaId, {
+      type: 'generated_video',
+      url: generation.outputUrl,
+      publicId: generation.publicId,
+      metadata: {
+        lipSync: true,
+        model,
+        audioUrl: params.audioUrl,
+      } as unknown as Prisma.InputJsonValue,
+    });
+
+    return {
+      generationId: generation.id,
+      outputUrl: generation.outputUrl,
+      personaId: params.personaId,
+      metadata: {
+        modelId: replicateModelId,
+        prompt: `Lip sync generation (${model})`,
+        lipSyncModel: model,
+      },
+    };
+  }
+}
