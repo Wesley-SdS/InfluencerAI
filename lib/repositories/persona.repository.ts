@@ -44,6 +44,10 @@ export class PersonaRepository {
   }
 
   async findAllByUser(userId: string, filters?: PersonaFilters) {
+    console.log('💾 [PersonaRepository.findAllByUser] Iniciando busca');
+    console.log('💾 [PersonaRepository.findAllByUser] userId:', userId);
+    console.log('💾 [PersonaRepository.findAllByUser] filters:', filters);
+
     const {
       niche,
       targetPlatform,
@@ -69,6 +73,8 @@ export class PersonaRepository {
       ];
     }
 
+    console.log('💾 [PersonaRepository.findAllByUser] where clause:', JSON.stringify(where, null, 2));
+
     const offset = (page - 1) * limit;
 
     const [personas, total] = await Promise.all([
@@ -84,6 +90,12 @@ export class PersonaRepository {
       }),
       prisma.persona.count({ where }),
     ]);
+
+    console.log('💾 [PersonaRepository.findAllByUser] Resultado do Prisma:', {
+      total,
+      personasCount: personas.length,
+      personas: personas.map(p => ({ id: p.id, name: p.name, userId: p.userId }))
+    });
 
     return { personas, total };
   }

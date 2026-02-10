@@ -18,15 +18,28 @@ export class PersonaService {
   private assetRepository = new PersonaAssetRepository();
 
   async createPersona(userId: string, data: CreatePersonaDTO) {
+    console.log('🆕 [PersonaService.createPersona] Iniciando criação');
+    console.log('🆕 [PersonaService.createPersona] userId:', userId);
+    console.log('🆕 [PersonaService.createPersona] data:', data);
+
     const slug = await SlugService.generateUniqueSlug(
       data.name,
       userId,
       (s, u) => this.repository.slugExists(s, u)
     );
+    console.log('🆕 [PersonaService.createPersona] slug gerado:', slug);
 
     const basePrompt = PromptBuilderService.buildBasePrompt(data);
+    console.log('🆕 [PersonaService.createPersona] basePrompt gerado');
 
-    return this.repository.create(userId, { ...data, slug, basePrompt });
+    const persona = await this.repository.create(userId, { ...data, slug, basePrompt });
+    console.log('✅ [PersonaService.createPersona] Persona criada no DB:', {
+      id: persona.id,
+      name: persona.name,
+      userId: persona.userId
+    });
+
+    return persona;
   }
 
   async updatePersona(userId: string, personaId: string, data: UpdatePersonaDTO) {
@@ -102,11 +115,21 @@ export class PersonaService {
   }
 
   async listPersonas(userId: string, filters?: PersonaFilters) {
+    console.log('📚 [PersonaService.listPersonas] Iniciando listagem');
+    console.log('📚 [PersonaService.listPersonas] userId:', userId);
+    console.log('📚 [PersonaService.listPersonas] filters:', filters);
+
     const { personas, total } = await this.repository.findAllByUser(userId, filters);
+    console.log('📚 [PersonaService.listPersonas] Resultado do repository:', {
+      total,
+      personasCount: personas.length,
+      personasIds: personas.map(p => p.id)
+    });
+
     const page = filters?.page || 1;
     const limit = filters?.limit || 12;
 
-    return {
+    const result = {
       personas,
       pagination: {
         page,
@@ -115,6 +138,13 @@ export class PersonaService {
         totalPages: Math.ceil(total / limit),
       },
     };
+
+    console.log('✅ [PersonaService.listPersonas] Retornando resultado:', {
+      personasCount: result.personas.length,
+      pagination: result.pagination
+    });
+
+    return result;
   }
 
   async addAsset(userId: string, personaId: string, data: {
