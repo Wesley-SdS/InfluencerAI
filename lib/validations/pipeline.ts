@@ -23,8 +23,8 @@ export const pipelinePersonaImageSchema = z.object({
   modelId: z.string().min(1),
   aspectRatio: z.string().optional(),
   useFaceConsistency: z.boolean().default(false),
-  faceConsistencyStrategy: z.enum(['ip-adapter-faceid', 'instant-id', 'photomaker']).optional(),
-  faceConsistencyStrength: z.number().min(0).max(1.5).optional(),
+  faceConsistencyStrategy: z.enum(['pulid', 'instant-id', 'photomaker']).optional(),
+  faceConsistencyStrength: z.number().min(0).max(5).optional(),
 });
 
 export const pipelinePersonaVideoSchema = z.object({
