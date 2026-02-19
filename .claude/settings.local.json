@@ -5,7 +5,12 @@
       "Bash(openssl rand:*)",
       "Bash(npm ls:*)",
       "Bash(echo:*)",
-      "Bash(npm run test:run:*)"
+      "Bash(npm run test:run:*)",
+      "Bash(npx prisma db seed:*)",
+      "Bash(del \"c:\\\\Users\\\\wesle\\\\OneDrive\\\\Documentos\\\\GitHub\\\\InfluencerAI\\\\scripts\\\\fix-credits.ts\")",
+      "Bash(del \"c:\\\\Users\\\\wesle\\\\OneDrive\\\\Documentos\\\\GitHub\\\\InfluencerAI\\\\components\\\\shared\\\\api-key-input.tsx\")",
+      "Bash(node -e:*)",
+      "WebFetch(domain:replicate.com)"
     ]
   }
 }
