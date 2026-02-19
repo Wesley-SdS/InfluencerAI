@@ -2,7 +2,7 @@
 
 import { REFINER_MODELS, type LLMModel } from "@/lib/types/models"
 import { LocalStorageService } from "@/lib/utils/localStorageUtils"
-import { createContext, useCallback, useContext, useState, type ReactNode } from "react"
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react"
 
 /**
  * Contexto para gerenciamento de configurações LLM (Language Model)
@@ -20,14 +20,16 @@ const LLMContext = createContext<LLMContextType | undefined>(undefined)
 const STORAGE_KEY = 'refiner_model'
 
 export function LLMProvider({ children }: { children: ReactNode }) {
-  const [selectedModel, setSelectedModelState] = useState<LLMModel>(() => {
+  const [selectedModel, setSelectedModelState] = useState<LLMModel>(REFINER_MODELS[0])
+
+  // Sync with localStorage after mount to avoid hydration mismatch
+  useEffect(() => {
     const saved = LocalStorageService.get(STORAGE_KEY)
     if (saved) {
       const found = REFINER_MODELS.find((m) => m.id === saved)
-      if (found) return found
+      if (found) setSelectedModelState(found)
     }
-    return REFINER_MODELS[0]
-  })
+  }, [])
 
   const setSelectedModel = useCallback((model: LLMModel) => {
     setSelectedModelState(model)
