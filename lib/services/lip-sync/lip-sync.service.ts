@@ -41,7 +41,7 @@ export class LipSyncService {
       throw new Error(`Modelo de lip sync '${model}' não encontrado`);
     }
 
-    const replicate = new Replicate({ auth: replicateKey });
+    const replicate = new Replicate({ auth: replicateKey, useFileOutput: false });
     const input = this.buildModelInput(model, params.imageUrl, params.audioUrl);
 
     const output = await replicate.run(

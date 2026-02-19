@@ -5,7 +5,7 @@ import type { APIResponse, GenerateImageRequest, GenerateVideoRequest, Replicate
  * Princípio: Dependency Inversion Principle (DIP)
  */
 export interface IGenerationService<TRequest> {
-  generate(request: TRequest & { apiKey: string }): Promise<APIResponse<ReplicateResponse>>
+  generate(request: TRequest & { apiKey?: string }): Promise<APIResponse<ReplicateResponse>>
 }
 
 /**

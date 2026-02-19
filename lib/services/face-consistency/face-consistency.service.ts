@@ -40,7 +40,7 @@ export class FaceConsistencyService {
     params: ConsistentImageParams
   ): Promise<ConsistentImageResult> {
     const strategy = this.getStrategy(params.strategy);
-    const replicate = new Replicate({ auth: replicateAuth });
+    const replicate = new Replicate({ auth: replicateAuth, useFileOutput: false });
 
     const input: Record<string, unknown> = {
       [strategy.inputMapping.faceImage]: params.faceImageUrl,

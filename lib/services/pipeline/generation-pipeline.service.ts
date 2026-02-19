@@ -41,6 +41,8 @@ export class GenerationPipelineService {
   ): Promise<PipelineResult> {
     const persona = await this.personaService.getPersona(userId, params.personaId);
     const personaAttrs = {
+      name: persona.name ?? undefined,
+      bio: persona.bio ?? undefined,
       gender: persona.gender ?? undefined,
       ageRange: persona.ageRange ?? undefined,
       ethnicity: persona.ethnicity ?? undefined,
@@ -50,6 +52,9 @@ export class GenerationPipelineService {
       eyeColor: persona.eyeColor ?? undefined,
       distinctiveFeatures: persona.distinctiveFeatures ?? undefined,
       styleDescription: persona.styleDescription ?? undefined,
+      niche: persona.niche ?? undefined,
+      contentTone: persona.contentTone ?? undefined,
+      language: persona.language ?? undefined,
     };
     const basePrompt = persona.basePrompt || PromptBuilderService.buildBasePrompt(personaAttrs);
     const fullPrompt = PromptBuilderService.buildImagePrompt(basePrompt, params.promptContext);
@@ -61,10 +66,10 @@ export class GenerationPipelineService {
         userId,
         {
           personaId: params.personaId,
-          strategy: params.faceConsistencyStrategy || 'ip-adapter-faceid',
+          strategy: params.faceConsistencyStrategy || 'pulid',
           prompt: fullPrompt,
           faceImageUrl: persona.referenceImageUrl,
-          strength: params.faceConsistencyStrength ?? 0.6,
+          strength: params.faceConsistencyStrength ?? 0.8,
           aspectRatio: params.aspectRatio,
         }
       );
@@ -83,7 +88,7 @@ export class GenerationPipelineService {
     }
 
     // Standard generation path
-    const replicate = new Replicate({ auth: replicateKey });
+    const replicate = new Replicate({ auth: replicateKey, useFileOutput: false });
     const input: Record<string, unknown> = { prompt: fullPrompt };
     if (params.aspectRatio) input.aspect_ratio = params.aspectRatio;
 
@@ -130,6 +135,8 @@ export class GenerationPipelineService {
   ): Promise<PipelineResult> {
     const persona = await this.personaService.getPersona(userId, params.personaId);
     const videoPersonaAttrs = {
+      name: persona.name ?? undefined,
+      bio: persona.bio ?? undefined,
       gender: persona.gender ?? undefined,
       ageRange: persona.ageRange ?? undefined,
       ethnicity: persona.ethnicity ?? undefined,
@@ -139,11 +146,14 @@ export class GenerationPipelineService {
       eyeColor: persona.eyeColor ?? undefined,
       distinctiveFeatures: persona.distinctiveFeatures ?? undefined,
       styleDescription: persona.styleDescription ?? undefined,
+      niche: persona.niche ?? undefined,
+      contentTone: persona.contentTone ?? undefined,
+      language: persona.language ?? undefined,
     };
     const basePrompt = persona.basePrompt || PromptBuilderService.buildBasePrompt(videoPersonaAttrs);
     const fullPrompt = PromptBuilderService.buildVideoPrompt(basePrompt, params.promptContext);
 
-    const replicate = new Replicate({ auth: replicateKey });
+    const replicate = new Replicate({ auth: replicateKey, useFileOutput: false });
     const input: Record<string, unknown> = { prompt: fullPrompt };
 
     const sourceImage = params.sourceImageUrl || persona.referenceImageUrl;
