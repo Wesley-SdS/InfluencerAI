@@ -27,6 +27,7 @@ export async function handleReplicateGeneration<T extends { apiKey: string; mode
     // Cria cliente Replicate
     const replicate = new Replicate({
       auth: validated.apiKey,
+      useFileOutput: false,
     })
 
     // Constrói input baseado na configuração
