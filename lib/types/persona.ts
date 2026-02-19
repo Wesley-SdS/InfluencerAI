@@ -31,6 +31,8 @@ export interface PersonaFilters {
 }
 
 export interface PersonaAttributes {
+  name?: string
+  bio?: string
   gender?: string
   ageRange?: string
   ethnicity?: string
@@ -40,6 +42,10 @@ export interface PersonaAttributes {
   eyeColor?: string
   distinctiveFeatures?: string
   styleDescription?: string
+  niche?: string
+  targetPlatform?: string
+  contentTone?: string
+  language?: string
 }
 
 export interface ImagePromptContext {

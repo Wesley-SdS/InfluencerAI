@@ -53,8 +53,8 @@ export const updatePersonaSchema = z.preprocess(
 export const personaFiltersSchema = z.object({
   niche: z.string().optional(),
   targetPlatform: z.string().optional(),
-  isActive: z.coerce.boolean().optional(),
-  isArchived: z.coerce.boolean().optional(),
+  isActive: z.string().optional().transform(v => v === undefined ? undefined : v === 'true'),
+  isArchived: z.string().optional().transform(v => v === undefined ? undefined : v === 'true'),
   search: z.string().optional(),
   page: z.coerce.number().min(1).default(1),
   limit: z.coerce.number().min(1).max(50).default(12),
