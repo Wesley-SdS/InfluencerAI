@@ -29,7 +29,7 @@ const INITIAL_STATE: ImageGenerationState = {
  * - Transformação de dados → replicateUtils
  */
 export function useImageGeneration() {
-  const { apiKey } = useReplicate()
+  const { isConfigured } = useReplicate()
   const { setGeneratedImageUrl, addToHistory } = useGeneration()
   const [state, setState] = useState<ImageGenerationState>(INITIAL_STATE)
 
@@ -43,8 +43,8 @@ export function useImageGeneration() {
 
   const generate = useCallback(
     async (options?: Partial<GenerateImageRequest>) => {
-      if (!apiKey) {
-        setState((prev) => ({ ...prev, error: "API key not configured" }))
+      if (!isConfigured) {
+        setState((prev) => ({ ...prev, error: "API key não configurada" }))
         return
       }
 
@@ -55,7 +55,6 @@ export function useImageGeneration() {
         const response = await imageGenerationService.generate({
           modelId: state.modelId,
           prompt: state.prompt,
-          apiKey,
           ...options,
         })
 
@@ -96,7 +95,7 @@ export function useImageGeneration() {
         }))
       }
     },
-    [apiKey, state.modelId, state.prompt, setGeneratedImageUrl, addToHistory],
+    [isConfigured, state.modelId, state.prompt, setGeneratedImageUrl, addToHistory],
   )
 
   const reset = useCallback(() => {

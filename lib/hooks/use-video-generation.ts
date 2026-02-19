@@ -35,7 +35,7 @@ const INITIAL_STATE: VideoGenerationState = {
  * - Construção de prompt → promptUtils
  */
 export function useVideoGeneration() {
-  const { apiKey } = useReplicate()
+  const { isConfigured } = useReplicate()
   const { generatedImageUrl, addToHistory } = useGeneration()
   const [state, setState] = useState<VideoGenerationState>({
     ...INITIAL_STATE,
@@ -68,8 +68,8 @@ export function useVideoGeneration() {
 
   const generate = useCallback(
     async (options?: Partial<GenerateVideoRequest>) => {
-      if (!apiKey) {
-        setState((prev) => ({ ...prev, error: "API key not configured" }))
+      if (!isConfigured) {
+        setState((prev) => ({ ...prev, error: "API key não configurada" }))
         return
       }
 
@@ -89,7 +89,6 @@ export function useVideoGeneration() {
           modelId: state.modelId,
           prompt,
           imageUrl: state.sourceImageUrl || generatedImageUrl || undefined,
-          apiKey,
           ...options,
         })
 
@@ -129,7 +128,7 @@ export function useVideoGeneration() {
         }))
       }
     },
-    [apiKey, state, generatedImageUrl, addToHistory],
+    [isConfigured, state, generatedImageUrl, addToHistory],
   )
 
   const reset = useCallback(() => {

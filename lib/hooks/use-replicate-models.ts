@@ -18,7 +18,7 @@ interface UseReplicateModelsReturn {
 }
 
 export function useReplicateModels({ type }: UseReplicateModelsOptions): UseReplicateModelsReturn {
-  const { apiKey } = useReplicate()
+  const { isConfigured } = useReplicate()
   const fallback = type === "image" ? IMAGE_MODELS : VIDEO_MODELS
   const [models, setModels] = useState<AIModel[]>(fallback)
   const [isLoading, setIsLoading] = useState(false)
@@ -28,7 +28,7 @@ export function useReplicateModels({ type }: UseReplicateModelsOptions): UseRepl
 
   const fetchModels = useCallback(
     async (query?: string) => {
-      if (!apiKey) {
+      if (!isConfigured) {
         setModels(fallback)
         setTotalCount(fallback.length)
         return
@@ -41,11 +41,7 @@ export function useReplicateModels({ type }: UseReplicateModelsOptions): UseRepl
         const params = new URLSearchParams({ type })
         if (query) params.set("query", query)
 
-        const response = await fetch(`/api/replicate/models?${params}`, {
-          headers: {
-            "x-replicate-api-key": apiKey,
-          },
-        })
+        const response = await fetch(`/api/replicate/models?${params}`)
 
         const data = await response.json()
 
@@ -69,7 +65,7 @@ export function useReplicateModels({ type }: UseReplicateModelsOptions): UseRepl
         setIsLoading(false)
       }
     },
-    [apiKey, type, fallback],
+    [isConfigured, type, fallback],
   )
 
   const searchModels = useCallback(
@@ -85,11 +81,11 @@ export function useReplicateModels({ type }: UseReplicateModelsOptions): UseRepl
   }, [fetchModels])
 
   useEffect(() => {
-    if (!hasFetched.current && apiKey) {
+    if (!hasFetched.current && isConfigured) {
       hasFetched.current = true
       fetchModels()
     }
-  }, [fetchModels, apiKey])
+  }, [fetchModels, isConfigured])
 
   return { models, isLoading, error, searchModels, refetch, totalCount }
 }

@@ -17,8 +17,8 @@ export function useGenerationPipeline() {
 
   // Face consistency controls
   const [useFaceConsistency, setUseFaceConsistency] = useState(false)
-  const [faceConsistencyStrategy, setFaceConsistencyStrategy] = useState<FaceConsistencyStrategyName>("ip-adapter-faceid")
-  const [faceConsistencyStrength, setFaceConsistencyStrength] = useState(0.6)
+  const [faceConsistencyStrategy, setFaceConsistencyStrategy] = useState<FaceConsistencyStrategyName>("pulid")
+  const [faceConsistencyStrength, setFaceConsistencyStrength] = useState(0.8)
 
   // Narration controls
   const [useNarration, setUseNarration] = useState(false)

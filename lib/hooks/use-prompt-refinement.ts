@@ -10,19 +10,15 @@ import { useOpenAI } from "@/lib/context/openai-context"
  * Responsabilidade: fornecer interface simplificada para verificar capacidade de refinamento
  */
 export function usePromptRefinement() {
-  const { apiKey: openaiKey, isConfigured: openaiConfigured } = useOpenAI()
-  const { apiKey: googleKey, isConfigured: googleConfigured } = useGoogle()
+  const { isConfigured: openaiConfigured } = useOpenAI()
+  const { isConfigured: googleConfigured } = useGoogle()
   const { selectedModel } = useLLM()
 
   // Pode refinar se tiver a chave do provider do modelo selecionado
   const canRefine = selectedModel.provider === "openai" ? openaiConfigured : googleConfigured
-  
-  // Retorna a API key apropriada baseada no provider selecionado
-  const activeApiKey = selectedModel.provider === "openai" ? openaiKey : googleKey
-  
+
   return {
     canRefine,
-    activeApiKey,
     activeProvider: selectedModel.provider,
     selectedModel,
   }

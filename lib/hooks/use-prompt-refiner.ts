@@ -15,7 +15,7 @@ interface UsePromptRefinerReturn {
 }
 
 export function usePromptRefiner({ type }: UsePromptRefinerOptions): UsePromptRefinerReturn {
-  const { apiKey, isConfigured } = useOpenAI()
+  const { isConfigured } = useOpenAI()
   const [isRefining, setIsRefining] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -43,7 +43,6 @@ export function usePromptRefiner({ type }: UsePromptRefinerOptions): UsePromptRe
           body: JSON.stringify({
             prompt,
             type,
-            apiKey,
           }),
         })
 
@@ -62,7 +61,7 @@ export function usePromptRefiner({ type }: UsePromptRefinerOptions): UsePromptRe
         setIsRefining(false)
       }
     },
-    [apiKey, isConfigured, type],
+    [isConfigured, type],
   )
 
   return { refinePrompt, isRefining, error, clearError }
