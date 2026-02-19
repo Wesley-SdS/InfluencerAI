@@ -19,8 +19,8 @@ import { ApiKeyManager } from "./api-key-manager"
  * Responsabilidade: gerenciar configurações de refinamento de prompts
  */
 export function PromptRefinerSettings() {
-  const { apiKey: openaiKey, setApiKey: setOpenAIKey, clearApiKey: clearOpenAIKey, isConfigured: isOpenAIConfigured } = useOpenAI()
-  const { apiKey: googleKey, setApiKey: setGoogleApiKey, clearApiKey: clearGoogleApiKey, isConfigured: isGoogleConfigured } = useGoogle()
+  const { saveApiKey: saveOpenAIKey, clearApiKey: clearOpenAIKey, isConfigured: isOpenAIConfigured } = useOpenAI()
+  const { saveApiKey: saveGoogleKey, clearApiKey: clearGoogleKey, isConfigured: isGoogleConfigured } = useGoogle()
   const { selectedModel, setSelectedModel } = useLLM()
   const [modelOpen, setModelOpen] = useState(false)
 
@@ -101,7 +101,7 @@ export function PromptRefinerSettings() {
           helpText="Obtenha sua chave em"
           helpLink="https://platform.openai.com/api-keys"
           isConfigured={isOpenAIConfigured}
-          onSave={setOpenAIKey}
+          onSave={saveOpenAIKey}
           onClear={clearOpenAIKey}
         />
 
@@ -112,8 +112,8 @@ export function PromptRefinerSettings() {
           helpText="Obtenha sua chave em"
           helpLink="https://aistudio.google.com/apikey"
           isConfigured={isGoogleConfigured}
-          onSave={setGoogleApiKey}
-          onClear={clearGoogleApiKey}
+          onSave={saveGoogleKey}
+          onClear={clearGoogleKey}
         />
       </CardContent>
     </Card>

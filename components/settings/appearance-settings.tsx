@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 import { Monitor, Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
+import { useEffect, useState } from "react"
 
 /**
  * Componente para configuração de aparência/tema
@@ -21,6 +22,9 @@ const THEMES = [
 
 export function AppearanceSettings() {
   const { theme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => setMounted(true), [])
 
   return (
     <Card>
@@ -38,7 +42,7 @@ export function AppearanceSettings() {
                 variant="outline"
                 size="sm"
                 onClick={() => setTheme(t.value)}
-                className={cn("flex-1", theme === t.value && "border-primary bg-primary/10 text-primary")}
+                className={cn("flex-1", mounted && theme === t.value && "border-primary bg-primary/10 text-primary")}
               >
                 <t.icon className="h-4 w-4 mr-2" />
                 {t.label}
