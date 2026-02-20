@@ -1,6 +1,7 @@
 import { Header } from "@/components/layout/header"
 import { MobileNav } from "@/components/layout/mobile-nav"
 import { Sidebar } from "@/components/layout/sidebar"
+import { UserMenu } from "@/components/layout/user-menu"
 import { PersonaProvider } from "@/lib/context/persona-context"
 import { GenerationProvider } from "@/lib/context/generation-context"
 import { GoogleProvider } from "@/lib/context/google-context"
@@ -41,7 +42,10 @@ export default function DashboardLayout({
                         <MobileNav />
                         <Header />
                       </div>
-                      <CreditIndicator />
+                      <div className="flex items-center gap-3">
+                        <CreditIndicator />
+                        <UserMenu />
+                      </div>
                     </div>
                   </header>
                   <Sidebar />
